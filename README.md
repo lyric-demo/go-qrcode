@@ -1,12 +1,15 @@
 # go-qrcode
-Golang 二维码生成示例，支持logo
+
+> Golang 二维码生成示例，支持logo缩放比例
 
 ## 编译并使用
 
 ```
 go build -o qrcode
-./qrcode --help
+./qrcode -l data/owl.png -t "收" -o data/shou.jpg
 ```
+
+![qrcode](https://github.com/lyric-demo/go-qrcode/blob/master/data/shou.jpg)
 
 ```
 Usage of ./qrcode:

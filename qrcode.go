@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"image"
-	"image/png"
+	"image/draw"
+	"image/jpeg"
+	_ "image/png"
 	"os"
 	"path/filepath"
 
@@ -54,8 +56,6 @@ func main() {
 	if logo != "" {
 		logoSize := float64(size) * float64(percent) / 100
 
-		logger.Infof("Logo:%v", logoSize)
-
 		srcImage, err = addLogo(srcImage, logo, int(logoSize))
 		if err != nil {
 			logger.Fatalf("增加Logo发生错误：%s", err.Error())
@@ -74,7 +74,7 @@ func main() {
 	}
 	defer outFile.Close()
 
-	png.Encode(outFile, srcImage)
+	jpeg.Encode(outFile, srcImage, &jpeg.Options{Quality: 100})
 
 	logger.Infof("二维码生成成功，文件路径：%s", outAbs)
 }
@@ -97,7 +97,7 @@ func resizeLogo(logo string, size uint) (image.Image, error) {
 	}
 	defer file.Close()
 
-	img, err := png.Decode(file)
+	img, _, err := image.Decode(file)
 	if err != nil {
 		return nil, err
 	}
@@ -112,12 +112,11 @@ func addLogo(srcImage image.Image, logo string, size int) (image.Image, error) {
 		return nil, err
 	}
 
-	offset := srcImage.Bounds().Max.X/2 - size/2
-	for x := 0; x < size; x++ {
-		for y := 0; y < size; y++ {
-			srcImage.(*image.Paletted).Set(offset+x, offset+y, logoImage.At(x, y))
-		}
-	}
+	offset := image.Pt((srcImage.Bounds().Dx()-logoImage.Bounds().Dx())/2, (srcImage.Bounds().Dy()-logoImage.Bounds().Dy())/2)
+	b := srcImage.Bounds()
+	m := image.NewNRGBA(b)
+	draw.Draw(m, b, srcImage, image.ZP, draw.Src)
+	draw.Draw(m, logoImage.Bounds().Add(offset), logoImage, image.ZP, draw.Over)
 
-	return srcImage, nil
+	return m, nil
 }
